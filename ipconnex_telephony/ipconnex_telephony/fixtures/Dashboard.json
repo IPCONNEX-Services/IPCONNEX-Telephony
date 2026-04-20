@@ -1,0 +1,29 @@
+[
+  {
+    "doctype": "Dashboard",
+    "name": "Telephony Overview",
+    "dashboard_name": "Telephony Overview",
+    "module": "Ipconnex Telephony",
+    "is_default": 0,
+    "cards": [
+      {"card": "IPX - Active Contracts"},
+      {"card": "IPX - Active Partners"},
+      {"card": "IPX - Total Receivable"},
+      {"card": "IPX - Total Payable"},
+      {"card": "IPX - Open Tickets"},
+      {"card": "IPX - Pending Rate Tasks"},
+      {"card": "IPX - Critical ASR Routes"},
+      {"card": "IPX - Pending Invoices"}
+    ],
+    "charts": [
+      {"chart": "IPX - Revenue Trend", "width": "Full"},
+      {"chart": "IPX - Calls Trend", "width": "Full"},
+      {"chart": "IPX - Top Receivables", "width": "Half"},
+      {"chart": "IPX - Top Payables", "width": "Half"},
+      {"chart": "IPX - Margin Trend", "width": "Half"},
+      {"chart": "IPX - Margin by Company", "width": "Half"},
+      {"chart": "IPX - Revenue by Customer", "width": "Full"},
+      {"chart": "IPX - ASR by Supplier", "width": "Full"}
+    ]
+  }
+]

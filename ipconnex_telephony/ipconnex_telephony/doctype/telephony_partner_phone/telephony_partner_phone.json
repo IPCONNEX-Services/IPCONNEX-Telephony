@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-04-20 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "field_order": [
+  "label",
+  "phone",
+  "is_primary"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Select",
+   "label": "Label",
+   "options": "Billing\nTechnical\nSupport\nMobile\nOther",
+   "default": "General",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 6
+  },
+  {
+   "default": "0",
+   "fieldname": "is_primary",
+   "fieldtype": "Check",
+   "label": "Primary",
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "modified": "2026-04-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ipconnex Telephony",
+ "name": "Telephony Partner Phone",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

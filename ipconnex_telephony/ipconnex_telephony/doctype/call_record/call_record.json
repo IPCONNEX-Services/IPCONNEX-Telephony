@@ -1,0 +1,197 @@
+{
+ "actions": [],
+ "autoname": "field:acr_call_id",
+ "creation": "2026-04-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "acr_call_id",
+  "call_date",
+  "start_time",
+  "duration_seconds",
+  "column_break_1",
+  "customer",
+  "supplier",
+  "destination_number",
+  "destination_country",
+  "rates_section",
+  "buy_rate",
+  "sell_rate",
+  "column_break_2",
+  "total_cost",
+  "total_revenue",
+  "margin",
+  "billing_section",
+  "is_excluded",
+  "customer_invoice_status",
+  "sales_invoice",
+  "column_break_3",
+  "supplier_invoice_status",
+  "purchase_invoice"
+ ],
+ "fields": [
+  {
+   "fieldname": "acr_call_id",
+   "fieldtype": "Data",
+   "label": "ACR Call ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "call_date",
+   "fieldtype": "Date",
+   "label": "Call Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Datetime",
+   "label": "Start Time"
+  },
+  {
+   "fieldname": "duration_seconds",
+   "fieldtype": "Int",
+   "label": "Duration (seconds)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "destination_number",
+   "fieldtype": "Data",
+   "label": "Destination Number"
+  },
+  {
+   "fieldname": "destination_country",
+   "fieldtype": "Data",
+   "label": "Destination Country"
+  },
+  {
+   "fieldname": "rates_section",
+   "fieldtype": "Section Break",
+   "label": "Rates & Financials"
+  },
+  {
+   "fieldname": "buy_rate",
+   "fieldtype": "Currency",
+   "label": "Buy Rate (per min)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sell_rate",
+   "fieldtype": "Currency",
+   "label": "Sell Rate (per min)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_cost",
+   "fieldtype": "Currency",
+   "label": "Total Cost",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_revenue",
+   "fieldtype": "Currency",
+   "label": "Total Revenue",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "margin",
+   "fieldtype": "Currency",
+   "label": "Margin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_excluded",
+   "fieldtype": "Check",
+   "label": "Excluded (skip stats & invoicing)"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "customer_invoice_status",
+   "fieldtype": "Select",
+   "label": "Customer Invoice Status",
+   "options": "Pending\nInvoiced"
+  },
+  {
+   "fieldname": "sales_invoice",
+   "fieldtype": "Link",
+   "label": "Sales Invoice",
+   "options": "Sales Invoice",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "supplier_invoice_status",
+   "fieldtype": "Select",
+   "label": "Supplier Invoice Status",
+   "options": "Pending\nInvoiced"
+  },
+  {
+   "fieldname": "purchase_invoice",
+   "fieldtype": "Link",
+   "label": "Purchase Invoice",
+   "options": "Purchase Invoice",
+   "read_only": 1
+  }
+ ],
+ "modified": "2026-04-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ipconnex Telephony",
+ "name": "Call Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "call_date",
+ "sort_order": "DESC",
+ "title_field": "acr_call_id"
+}

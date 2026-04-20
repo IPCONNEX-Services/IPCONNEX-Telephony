@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "creation": "2026-04-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "credentials_section",
+  "scraper_username",
+  "scraper_password",
+  "column_break_1",
+  "is_active",
+  "sync_interval_minutes",
+  "endpoints_section",
+  "acr_url",
+  "ixc_url",
+  "infisical_section",
+  "infisical_project_slug",
+  "infisical_environment",
+  "scraper_password_secret_key",
+  "sync_state_section",
+  "last_gain_sync",
+  "last_quality_sync"
+ ],
+ "fields": [
+  {
+   "fieldname": "credentials_section",
+   "fieldtype": "Section Break",
+   "label": "Scraper Credentials",
+   "description": "Shared username/password used for ACR + IXC (and any future scraper)."
+  },
+  {
+   "fieldname": "scraper_username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scraper_password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "description": "Leave blank if using Infisical (set Scraper Password Secret Key below)."
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "default": "60",
+   "fieldname": "sync_interval_minutes",
+   "fieldtype": "Int",
+   "label": "Sync Interval (minutes)"
+  },
+  {
+   "fieldname": "endpoints_section",
+   "fieldtype": "Section Break",
+   "label": "Endpoints"
+  },
+  {
+   "fieldname": "acr_url",
+   "fieldtype": "Data",
+   "label": "ACR Base URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ixc_url",
+   "fieldtype": "Data",
+   "label": "IXC Base URL",
+   "default": "https://ipconnex.ixc.ua",
+   "description": "Leave blank to disable IXC polling."
+  },
+  {
+   "fieldname": "infisical_section",
+   "fieldtype": "Section Break",
+   "label": "Infisical (Secrets)",
+   "collapsible": 1,
+   "description": "Optional — overrides the password above. Requires INFISICAL_URL, INFISICAL_CLIENT_ID, INFISICAL_CLIENT_SECRET on the bench environment."
+  },
+  {
+   "fieldname": "infisical_project_slug",
+   "fieldtype": "Data",
+   "label": "Infisical Project Slug",
+   "default": "tenant-ipconnex"
+  },
+  {
+   "fieldname": "infisical_environment",
+   "fieldtype": "Data",
+   "label": "Infisical Environment",
+   "default": "prod"
+  },
+  {
+   "fieldname": "scraper_password_secret_key",
+   "fieldtype": "Data",
+   "label": "Scraper Password Secret Key",
+   "description": "Infisical secret key that holds the scraper password (e.g. SCRAPER_PASSWORD). Overrides the password field above."
+  },
+  {
+   "fieldname": "sync_state_section",
+   "fieldtype": "Section Break",
+   "label": "Sync State",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "last_gain_sync",
+   "fieldtype": "Datetime",
+   "label": "Last Gain Sync",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_quality_sync",
+   "fieldtype": "Datetime",
+   "label": "Last Quality Sync",
+   "read_only": 1
+  }
+ ],
+ "issingle": 1,
+ "modified": "2026-04-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ipconnex Telephony",
+ "name": "Telephony Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

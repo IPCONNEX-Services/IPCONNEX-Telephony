@@ -1,0 +1,92 @@
+[
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Active Contracts",
+    "label": "Active Contracts",
+    "document_type": "Telephony Contract",
+    "function": "Count",
+    "filters_json": "[[\"Telephony Contract\", \"is_active\", \"=\", 1]]",
+    "color": "#5e64ff",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Open Tickets",
+    "label": "Open Tickets",
+    "document_type": "Telephony Ticket",
+    "function": "Count",
+    "filters_json": "[[\"Telephony Ticket\", \"status\", \"=\", \"Open\"]]",
+    "color": "#f8814f",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Pending Rate Tasks",
+    "label": "Pending Rate Tasks",
+    "document_type": "Rate Task",
+    "function": "Count",
+    "filters_json": "[[\"Rate Task\", \"status\", \"=\", \"Pending\"]]",
+    "color": "#7b5ea7",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Critical ASR Routes",
+    "label": "Critical ASR Routes",
+    "document_type": "Call Quality Summary",
+    "function": "Count",
+    "filters_json": "[[\"Call Quality Summary\", \"asr_status\", \"=\", \"Critical\"]]",
+    "color": "#e24c4b",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Pending Invoices",
+    "label": "Pending Invoice Logs",
+    "document_type": "Invoice Generation Log",
+    "function": "Count",
+    "filters_json": "[[\"Invoice Generation Log\", \"status\", \"=\", \"Failed\"]]",
+    "color": "#e24c4b",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Total Receivable",
+    "label": "Total Receivable",
+    "document_type": "Sales Invoice",
+    "function": "Sum",
+    "aggregate_function_based_on": "outstanding_amount",
+    "filters_json": "[[\"Sales Invoice\", \"docstatus\", \"=\", 1], [\"Sales Invoice\", \"outstanding_amount\", \">\", 0]]",
+    "color": "#2ecc71",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Total Payable",
+    "label": "Total Payable",
+    "document_type": "Purchase Invoice",
+    "function": "Sum",
+    "aggregate_function_based_on": "outstanding_amount",
+    "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1], [\"Purchase Invoice\", \"outstanding_amount\", \">\", 0]]",
+    "color": "#e67e22",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Active Partners",
+    "label": "Active Partners",
+    "document_type": "Telephony Partner",
+    "function": "Count",
+    "filters_json": "[[\"Telephony Partner\", \"is_active\", \"=\", 1]]",
+    "color": "#5e64ff",
+    "module": "Ipconnex Telephony",
+    "is_public": 1
+  }
+]

@@ -1,0 +1,269 @@
+{
+ "actions": [],
+ "autoname": "field:partner_name",
+ "creation": "2026-04-20 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "partner_name",
+  "display_name",
+  "column_break_1",
+  "is_active",
+  "tax_id",
+  "billing_section",
+  "customer",
+  "column_break_2",
+  "supplier",
+  "balance_section",
+  "total_receivable",
+  "total_payable",
+  "column_break_3",
+  "net_balance",
+  "contact_section",
+  "primary_email",
+  "primary_phone",
+  "column_break_4",
+  "website",
+  "emails_section",
+  "emails",
+  "phones_section",
+  "phones",
+  "address_section",
+  "address_line_1",
+  "address_line_2",
+  "column_break_5",
+  "city",
+  "country",
+  "notes_section",
+  "notes",
+  "sync_section",
+  "synced_contact",
+  "synced_address"
+ ],
+ "fields": [
+  {
+   "fieldname": "partner_name",
+   "fieldtype": "Data",
+   "label": "Partner Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active"
+  },
+  {
+   "fieldname": "tax_id",
+   "fieldtype": "Data",
+   "label": "Tax ID / VAT"
+  },
+  {
+   "fieldname": "billing_section",
+   "fieldtype": "Section Break",
+   "label": "Billing Links",
+   "description": "At least one required. Same party may be both (interconnect/netting)."
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "balance_section",
+   "fieldtype": "Section Break",
+   "label": "Live Balance",
+   "description": "Computed on form open from unpaid Sales + Purchase Invoices. Positive net = they owe us."
+  },
+  {
+   "fieldname": "total_receivable",
+   "fieldtype": "Currency",
+   "label": "Total Receivable",
+   "read_only": 1,
+   "is_virtual": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "total_payable",
+   "fieldtype": "Currency",
+   "label": "Total Payable",
+   "read_only": 1,
+   "is_virtual": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_balance",
+   "fieldtype": "Currency",
+   "label": "Net Outstanding",
+   "read_only": 1,
+   "is_virtual": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Primary Contact"
+  },
+  {
+   "fieldname": "primary_email",
+   "fieldtype": "Data",
+   "label": "Primary Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "primary_phone",
+   "fieldtype": "Data",
+   "label": "Primary Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "website",
+   "fieldtype": "Data",
+   "label": "Website"
+  },
+  {
+   "fieldname": "emails_section",
+   "fieldtype": "Section Break",
+   "label": "All Emails",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "emails",
+   "fieldtype": "Table",
+   "label": "Emails",
+   "options": "Telephony Partner Email"
+  },
+  {
+   "fieldname": "phones_section",
+   "fieldtype": "Section Break",
+   "label": "All Phones",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "phones",
+   "fieldtype": "Table",
+   "label": "Phones",
+   "options": "Telephony Partner Phone"
+  },
+  {
+   "fieldname": "address_section",
+   "fieldtype": "Section Break",
+   "label": "Address",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "address_line_1",
+   "fieldtype": "Data",
+   "label": "Address Line 1"
+  },
+  {
+   "fieldname": "address_line_2",
+   "fieldtype": "Data",
+   "label": "Address Line 2"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "notes_section",
+   "fieldtype": "Section Break",
+   "label": "Notes",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "sync_section",
+   "fieldtype": "Section Break",
+   "label": "Sync References",
+   "collapsible": 1,
+   "description": "Auto-managed. Tracks ERPNext Contact/Address upserted from this partner."
+  },
+  {
+   "fieldname": "synced_contact",
+   "fieldtype": "Link",
+   "label": "Synced Contact",
+   "options": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "synced_address",
+   "fieldtype": "Link",
+   "label": "Synced Address",
+   "options": "Address",
+   "read_only": 1
+  }
+ ],
+ "modified": "2026-04-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Ipconnex Telephony",
+ "name": "Telephony Partner",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Accounts Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "partner_name",
+ "sort_order": "ASC",
+ "title_field": "partner_name"
+}
