@@ -4,10 +4,10 @@ Invoice data scraper — formats Originated (customer) data as invoice line item
 Each line item represents one country destination billed during the period.
 
 Usage:
-    from scraping.common import IXCClient
-    from scraping.invoice_data import get_invoice_data
+    from ipconnex_telephony.scraping.common import IXCClient
+    from ipconnex_telephony.scraping.invoice_data import get_invoice_data
 
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_invoice_data(client, from_date, to_date)
 """
 
@@ -83,10 +83,8 @@ if __name__ == "__main__":
     import sys
     from datetime import timedelta
 
-    username = sys.argv[1]
-    password = sys.argv[2]
-    target   = date.fromisoformat(sys.argv[3]) if len(sys.argv) > 3 else date.today() - timedelta(days=1)
+    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else date.today() - timedelta(days=1)
 
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_invoice_data(client, target, target)
     print(json.dumps(result, indent=2))

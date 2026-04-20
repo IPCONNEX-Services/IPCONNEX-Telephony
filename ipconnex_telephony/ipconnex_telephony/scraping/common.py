@@ -2,7 +2,7 @@
 Shared IXC scraping utilities — session management, HTML parsing, type coercion.
 
 All public functions return plain Python dicts/lists (JSON-serializable).
-No Frappe dependency; import freely from any feature file.
+Credentials and base URL are read from the Telephony Settings single doctype.
 """
 
 import re
@@ -13,7 +13,6 @@ from datetime import date
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-IXC_BASE       = "https://ipconnex.ixc.ua"
 LOGIN_PATH     = "/login/login"
 CUSTOMERS_PATH = "/customers"
 REPORT_PATH    = "/system_reports/traffic_flow_report"
@@ -34,44 +33,51 @@ class IXCClient:
     Pass one instance across multiple feature calls to avoid redundant HTTP trips.
 
     Usage:
-        client = IXCClient.connect(username, password)
+        client = IXCClient.connect()
         gain   = get_gain_stats(client, from_date, to_date)
         asr    = get_asr_quality(client, from_date, to_date)
     """
 
-    def __init__(self, session: requests.Session, references: dict):
+    def __init__(self, session: requests.Session, references: dict, base_url: str):
         self.session    = session
         self.references = references  # {ixc_name: erp_name}
+        self.base_url   = base_url
 
     @classmethod
-    def connect(cls, username: str, password: str) -> "IXCClient":
-        session    = _do_login(username, password)
-        references = _fetch_references(session)
-        return cls(session, references)
+    def connect(cls) -> "IXCClient":
+        import frappe
+        from ipconnex_telephony.utils.acr_scraper import resolve_scraper_password
+        settings  = frappe.get_single("Telephony Settings")
+        base_url  = (settings.ixc_url or "https://ipconnex.ixc.ua").rstrip("/")
+        username  = settings.scraper_username
+        password  = resolve_scraper_password(settings)
+        session    = _do_login(username, password, base_url)
+        references = _fetch_references(session, base_url)
+        return cls(session, references, base_url)
 
     def resolve(self, ixc_name: str) -> str:
         return self.references.get(ixc_name, ixc_name)
 
     def fetch_traffic(self, from_date: date, to_date: date) -> dict:
-        html = fetch_traffic_report(self.session, from_date, to_date)
+        html = fetch_traffic_report(self.session, from_date, to_date, self.base_url)
         return parse_traffic(html)
 
     def fetch_balance_html(self) -> str:
-        return fetch_balance_report(self.session)
+        return fetch_balance_report(self.session, self.base_url)
 
 
 # ---------------------------------------------------------------------------
 # Low-level session helpers (used by IXCClient; also exported for direct use)
 # ---------------------------------------------------------------------------
 
-def _do_login(username: str, password: str) -> requests.Session:
+def _do_login(username: str, password: str, base_url: str) -> requests.Session:
     """
     Opens an authenticated IXC session.
     requests.Session tracks cookies automatically — no manual jar handling needed.
     Raises RuntimeError if 'Logout' is absent from the response (bad credentials).
     Use IXCClient.connect() as the public entry point.
     """
-    url     = IXC_BASE + LOGIN_PATH
+    url     = base_url + LOGIN_PATH
     session = requests.Session()
     session.get(url, verify=False)          # establishes CSRF / session cookie
     r = session.post(
@@ -80,18 +86,18 @@ def _do_login(username: str, password: str) -> requests.Session:
         verify=False,
     )
     if "Logout" not in str(r.content):
-        raise RuntimeError("IXC login failed — check credentials")
+        raise RuntimeError("IXC login failed — check credentials in Telephony Settings")
     return session
 
 
-def _fetch_references(session: requests.Session) -> dict:
+def _fetch_references(session: requests.Session, base_url: str) -> dict:
     """
     Returns {ixc_name: erp_name} from the IXC /customers page.
     Parses the full page (not just the first class="table") so that
     the #customers-list element is always found regardless of page layout.
     """
     try:
-        r    = session.get(IXC_BASE + CUSTOMERS_PATH, verify=False)
+        r    = session.get(base_url + CUSTOMERS_PATH, verify=False)
         soup = BeautifulSoup(r.text, "html5lib")
         tbl  = soup.find(id="customers-list")
         if not tbl:
@@ -110,7 +116,7 @@ def _fetch_references(session: requests.Session) -> dict:
 # HTTP fetchers
 # ---------------------------------------------------------------------------
 
-def fetch_traffic_report(session: requests.Session, from_date: date, to_date: date) -> str:
+def fetch_traffic_report(session: requests.Session, from_date: date, to_date: date, base_url: str) -> str:
     """Fetches the raw HTML of the IXC traffic flow report for the given date range."""
     params = (
         f"?utf8=%E2%9C%93"
@@ -124,14 +130,14 @@ def fetch_traffic_report(session: requests.Session, from_date: date, to_date: da
         f"&values%5Bterminator_id%5D%5B%5D=all"
         f"&group_by=1&code=&tf_group_country=none&responsible=All&commit=Get+report"
     )
-    r = session.get(IXC_BASE + REPORT_PATH + params, verify=False)
+    r = session.get(base_url + REPORT_PATH + params, verify=False)
     r.raise_for_status()
     return r.text
 
 
-def fetch_balance_report(session: requests.Session) -> str:
+def fetch_balance_report(session: requests.Session, base_url: str) -> str:
     """Fetches the raw HTML of the IXC balance report."""
-    r = session.get(IXC_BASE + BALANCE_PATH, verify=False)
+    r = session.get(base_url + BALANCE_PATH, verify=False)
     r.raise_for_status()
     return r.text
 

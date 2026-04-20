@@ -2,10 +2,10 @@
 Balance report scraper — fetches account balances from IXC /system_reports/balance_report.
 
 Usage:
-    from scraping.common import IXCClient
-    from scraping.balance_report import get_balance_report
+    from ipconnex_telephony.scraping.common import IXCClient
+    from ipconnex_telephony.scraping.balance_report import get_balance_report
 
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_balance_report(client)
 """
 
@@ -69,11 +69,6 @@ def _parse_balance(html: str, client: IXCClient) -> list:
 
 
 if __name__ == "__main__":
-    import sys
-
-    username = sys.argv[1]
-    password = sys.argv[2]
-
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_balance_report(client)
     print(json.dumps(result, indent=2))

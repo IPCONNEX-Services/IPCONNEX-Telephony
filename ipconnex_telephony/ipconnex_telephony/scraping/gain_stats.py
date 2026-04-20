@@ -4,10 +4,10 @@ Gain stats scraper — fetches Originated (customer) revenue data from IXC.
 Returns JSON with charges, minutes, and call attempts per customer × country.
 
 Usage:
-    from scraping.common import IXCClient
-    from scraping.gain_stats import get_gain_stats
+    from ipconnex_telephony.scraping.common import IXCClient
+    from ipconnex_telephony.scraping.gain_stats import get_gain_stats
 
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_gain_stats(client, from_date, to_date)
 """
 
@@ -76,10 +76,8 @@ if __name__ == "__main__":
     import sys
     from datetime import timedelta
 
-    username = sys.argv[1]
-    password = sys.argv[2]
-    target   = date.fromisoformat(sys.argv[3]) if len(sys.argv) > 3 else date.today() - timedelta(days=1)
+    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else date.today() - timedelta(days=1)
 
-    client = IXCClient.connect(username, password)
+    client = IXCClient.connect()
     result = get_gain_stats(client, target, target)
     print(json.dumps(result, indent=2))

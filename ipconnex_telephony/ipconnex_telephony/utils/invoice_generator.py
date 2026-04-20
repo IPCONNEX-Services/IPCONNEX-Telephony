@@ -294,6 +294,8 @@ def _period_ends_today(contract, as_of):
         return as_of.day in (15, last_day)
     if cycle == "Weekly":
         start = getdate(contract["start_date"])
+        if as_of < start:
+            return False
         return ((as_of - start).days + 1) % 7 == 0
     return False
 

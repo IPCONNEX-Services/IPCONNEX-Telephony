@@ -16,6 +16,7 @@ fixtures = [
 scheduler_events = {
     "daily": [
         "ipconnex_telephony.utils.acr_scraper.sync_call_records",
+        "ipconnex_telephony.utils.ixc_scraper.sync_ixc_stats",
         "ipconnex_telephony.utils.gain_aggregator.build_daily_gain_summaries",
         "ipconnex_telephony.utils.quality_aggregator.build_daily_quality_summaries",
         "ipconnex_telephony.utils.invoice_generator.run_billing_cycle",
