@@ -7,8 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "summary_date",
-  "customer",
-  "supplier",
+  "partner_type",
+  "partner",
   "column_break_1",
   "total_calls",
   "total_minutes",
@@ -21,13 +21,7 @@
   "assignment_section",
   "sales_manager",
   "column_break_3",
-  "company",
-  "invoicing_section",
-  "customer_invoice_status",
-  "sales_invoice",
-  "column_break_4",
-  "supplier_invoice_status",
-  "purchase_invoice"
+  "company"
  ],
  "fields": [
   {
@@ -38,17 +32,19 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "customer",
-   "fieldtype": "Link",
-   "label": "Customer",
-   "options": "Customer",
+   "fieldname": "partner_type",
+   "fieldtype": "Select",
+   "label": "Partner Type",
+   "options": "Customer\nSupplier",
+   "reqd": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "supplier",
-   "fieldtype": "Link",
-   "label": "Supplier",
-   "options": "Supplier",
+   "fieldname": "partner",
+   "fieldtype": "Dynamic Link",
+   "label": "Partner",
+   "options": "partner_type",
+   "reqd": 1,
    "in_list_view": 1
   },
   {
@@ -106,7 +102,8 @@
    "fieldname": "sales_manager",
    "fieldtype": "Link",
    "label": "Sales Manager",
-   "options": "Telephony Sales Manager"
+   "options": "Telephony Sales Manager",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_3",
@@ -116,48 +113,11 @@
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Telephony Company Settings"
-  },
-  {
-   "fieldname": "invoicing_section",
-   "fieldtype": "Section Break",
-   "label": "Invoicing",
-   "collapsible": 1
-  },
-  {
-   "default": "Pending",
-   "fieldname": "customer_invoice_status",
-   "fieldtype": "Select",
-   "label": "Customer Invoice Status",
-   "options": "Pending\nInvoiced\nN/A"
-  },
-  {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "label": "Sales Invoice",
-   "options": "Sales Invoice",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "Pending",
-   "fieldname": "supplier_invoice_status",
-   "fieldtype": "Select",
-   "label": "Supplier Invoice Status",
-   "options": "Pending\nInvoiced\nN/A"
-  },
-  {
-   "fieldname": "purchase_invoice",
-   "fieldtype": "Link",
-   "label": "Purchase Invoice",
-   "options": "Purchase Invoice",
+   "options": "Telephony Company Settings",
    "read_only": 1
   }
  ],
- "modified": "2026-04-19 00:00:00.000000",
+ "modified": "2026-04-22 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "IPCONNEX Telephony",
  "name": "Daily Gain Summary",

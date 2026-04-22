@@ -13,10 +13,6 @@
   "sync_interval_minutes",
   "endpoints_section",
   "url",
-  "infisical_section",
-  "infisical_project_slug",
-  "infisical_environment",
-  "scraper_password_secret_key",
   "thresholds_section",
   "asr_critical",
   "asr_warning",
@@ -44,7 +40,7 @@
    "fieldname": "scraper_password",
    "fieldtype": "Password",
    "label": "Password",
-   "description": "Leave blank if using Infisical (set Scraper Password Secret Key below)."
+   "description": "Scraper account password."
   },
   {
    "fieldname": "column_break_1",
@@ -73,31 +69,6 @@
    "label": "Base URL",
    "reqd": 1,
    "description": "Base URL of the platform. Used for login, ACR, and all scraping."
-  },
-  {
-   "fieldname": "infisical_section",
-   "fieldtype": "Section Break",
-   "label": "Infisical (Secrets)",
-   "collapsible": 1,
-   "description": "Optional — overrides the password above. Requires INFISICAL_URL, INFISICAL_CLIENT_ID, INFISICAL_CLIENT_SECRET on the bench environment."
-  },
-  {
-   "fieldname": "infisical_project_slug",
-   "fieldtype": "Data",
-   "label": "Infisical Project Slug",
-   "default": "tenant-ipconnex"
-  },
-  {
-   "fieldname": "infisical_environment",
-   "fieldtype": "Data",
-   "label": "Infisical Environment",
-   "default": "prod"
-  },
-  {
-   "fieldname": "scraper_password_secret_key",
-   "fieldtype": "Data",
-   "label": "Scraper Password Secret Key",
-   "description": "Infisical secret key that holds the scraper password (e.g. SCRAPER_PASSWORD). Overrides the password field above."
   },
   {
    "fieldname": "thresholds_section",
