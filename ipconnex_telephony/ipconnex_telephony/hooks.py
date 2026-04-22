@@ -1,5 +1,5 @@
 app_name = "ipconnex_telephony"
-app_title = "Ipconnex Telephony"
+app_title = "IPCONNEX Telephony"
 app_publisher = "IPCONNEX"
 app_description = "SIP/VoIP billing — ACR scraping, auto-invoicing, gain dashboards"
 app_email = "yacine.g@ipconnex.com"
@@ -7,18 +7,17 @@ app_license = "MIT"
 
 # Fixtures — Dashboard, Charts, Number Cards
 fixtures = [
-    {"dt": "Number Card", "filters": [["module", "=", "Ipconnex Telephony"]]},
-    {"dt": "Dashboard Chart", "filters": [["module", "=", "Ipconnex Telephony"]]},
-    {"dt": "Dashboard", "filters": [["module", "=", "Ipconnex Telephony"]]},
+    {"dt": "Number Card", "filters": [["module", "=", "IPCONNEX Telephony"]]},
+    {"dt": "Dashboard Chart", "filters": [["module", "=", "IPCONNEX Telephony"]]},
+    {"dt": "Dashboard", "filters": [["module", "=", "IPCONNEX Telephony"]]},
 ]
 
 # Scheduled Tasks
 scheduler_events = {
-    "daily": [
-        "ipconnex_telephony.utils.acr_scraper.sync_call_records",
+    "all": [
         "ipconnex_telephony.utils.ixc_scraper.sync_ixc_stats",
-        "ipconnex_telephony.utils.gain_aggregator.build_daily_gain_summaries",
-        "ipconnex_telephony.utils.quality_aggregator.build_daily_quality_summaries",
+    ],
+    "daily": [
         "ipconnex_telephony.utils.invoice_generator.run_billing_cycle",
         "ipconnex_telephony.utils.invoice_generator.retry_failed_invoices",
     ],

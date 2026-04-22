@@ -23,8 +23,8 @@
   {
    "fieldname": "telephony_contract",
    "fieldtype": "Link",
-   "label": "Telephony Contract",
-   "options": "Telephony Contract",
+   "label": "Telephony Partner Contract",
+   "options": "Telephony Partner Contract",
    "reqd": 1,
    "in_list_view": 1
   },
@@ -96,7 +96,7 @@
  ],
  "modified": "2026-04-19 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Ipconnex Telephony",
+ "module": "IPCONNEX Telephony",
  "name": "Telephony Ticket",
  "owner": "Administrator",
  "permissions": [

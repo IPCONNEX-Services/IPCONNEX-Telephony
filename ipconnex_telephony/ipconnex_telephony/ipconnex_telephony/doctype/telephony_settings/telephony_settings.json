@@ -12,13 +12,18 @@
   "is_active",
   "sync_interval_minutes",
   "endpoints_section",
-  "acr_url",
-  "ixc_url",
+  "url",
   "infisical_section",
   "infisical_project_slug",
   "infisical_environment",
   "scraper_password_secret_key",
+  "thresholds_section",
+  "asr_critical",
+  "asr_warning",
+  "column_break_2",
+  "acd_low",
   "sync_state_section",
+  "last_acr_sync",
   "last_gain_sync",
   "last_quality_sync"
  ],
@@ -63,17 +68,11 @@
    "label": "Endpoints"
   },
   {
-   "fieldname": "acr_url",
+   "fieldname": "url",
    "fieldtype": "Data",
-   "label": "ACR Base URL",
-   "reqd": 1
-  },
-  {
-   "fieldname": "ixc_url",
-   "fieldtype": "Data",
-   "label": "IXC Base URL",
-   "default": "https://ipconnex.ixc.ua",
-   "description": "Leave blank to disable IXC polling."
+   "label": "Base URL",
+   "reqd": 1,
+   "description": "Base URL of the platform. Used for login, ACR, and all scraping."
   },
   {
    "fieldname": "infisical_section",
@@ -101,10 +100,46 @@
    "description": "Infisical secret key that holds the scraper password (e.g. SCRAPER_PASSWORD). Overrides the password field above."
   },
   {
+   "fieldname": "thresholds_section",
+   "fieldtype": "Section Break",
+   "label": "Quality Thresholds"
+  },
+  {
+   "fieldname": "asr_critical",
+   "fieldtype": "Float",
+   "label": "ASR Critical (%)",
+   "default": "30",
+   "description": "ASR below this value is flagged as critical."
+  },
+  {
+   "fieldname": "asr_warning",
+   "fieldtype": "Float",
+   "label": "ASR Warning (%)",
+   "default": "50",
+   "description": "ASR below this value triggers a warning."
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acd_low",
+   "fieldtype": "Float",
+   "label": "ACD Low (seconds)",
+   "default": "30",
+   "description": "ACD below this value is flagged as low quality."
+  },
+  {
    "fieldname": "sync_state_section",
    "fieldtype": "Section Break",
    "label": "Sync State",
    "collapsible": 1
+  },
+  {
+   "fieldname": "last_acr_sync",
+   "fieldtype": "Datetime",
+   "label": "Last ACR Sync",
+   "read_only": 1
   },
   {
    "fieldname": "last_gain_sync",
@@ -122,7 +157,7 @@
  "issingle": 1,
  "modified": "2026-04-20 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Ipconnex Telephony",
+ "module": "IPCONNEX Telephony",
  "name": "Telephony Settings",
  "owner": "Administrator",
  "permissions": [

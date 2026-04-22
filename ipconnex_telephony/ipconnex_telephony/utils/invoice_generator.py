@@ -11,8 +11,10 @@ the other. Each leg gets its own Invoice Generation Log row keyed by direction.
 
 import traceback
 import frappe
-from frappe.utils import today, getdate, add_days, now_datetime
+from frappe.utils import getdate, add_days, now_datetime
 import calendar
+
+from ipconnex_telephony.utils import utc_today, utc_now
 
 
 CUSTOMER_LEG = "Customer"
@@ -24,19 +26,57 @@ SUPPLIER_LEG = "Supplier"
 # ---------------------------------------------------------------------------
 
 def run_billing_cycle(as_of=None):
-    as_of = getdate(as_of or today())
+    as_of = getdate(as_of) if as_of else utc_today()
+    period_end = add_days(as_of, -1)  # yesterday — all data for that day is already synced
     contracts = frappe.get_all(
-        "Telephony Contract",
+        "Telephony Partner Contract",
         filters={"is_active": 1},
         fields=["name", "customer", "supplier", "billing_cycle", "start_date", "currency", "company"],
     )
     for contract in contracts:
-        if not _period_ends_today(contract, as_of):
+        if not _is_period_end(contract, period_end):
             continue
         if contract.get("customer"):
-            _process(contract, as_of, CUSTOMER_LEG)
+            _process(contract, period_end, CUSTOMER_LEG)
         if contract.get("supplier"):
-            _process(contract, as_of, SUPPLIER_LEG)
+            _process(contract, period_end, SUPPLIER_LEG)
+
+
+# ---------------------------------------------------------------------------
+# Manual trigger API — callable from button or script
+# ---------------------------------------------------------------------------
+
+@frappe.whitelist()
+def generate_invoice_now(contract_name, direction, period_end=None):
+    """
+    Manually generate a Sales Invoice (direction='Customer') or Purchase Invoice
+    (direction='Supplier') for a contract, without waiting for the billing cycle.
+
+    period_end defaults to yesterday. Raises if a successful invoice already exists
+    for that period.
+    """
+    contract = frappe.get_doc("Telephony Partner Contract", contract_name)
+    if not contract.is_active:
+        frappe.throw(f"Contract {contract_name} is not active")
+
+    period_end_date = getdate(period_end) if period_end else add_days(utc_today(), -1)
+
+    if direction == CUSTOMER_LEG and not contract.customer:
+        frappe.throw(f"Contract {contract_name} has no customer")
+    if direction == SUPPLIER_LEG and not contract.supplier:
+        frappe.throw(f"Contract {contract_name} has no supplier")
+
+    _process(contract.as_dict(), period_end_date, direction)
+    log = frappe.db.get_value(
+        "Invoice Generation Log",
+        {"contract": contract_name, "period_end": period_end_date, "direction": direction},
+        ["status", "sales_invoice", "purchase_invoice", "error_message", "total_amount"],
+        as_dict=True,
+    )
+    if log and log.status == "Failed":
+        frappe.throw(log.error_message or "Invoice generation failed")
+    invoice_name = log.sales_invoice if direction == CUSTOMER_LEG else log.purchase_invoice
+    return {"invoice": invoice_name, "amount": log.total_amount if log else None}
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +99,7 @@ def retry_failed_invoices():
 
 def retry_log_entry(log_name):
     log = frappe.get_doc("Invoice Generation Log", log_name)
-    contract = frappe.get_doc("Telephony Contract", log.contract)
+    contract = frappe.get_doc("Telephony Partner Contract", log.contract)
     _attempt(contract.as_dict(), log.period_end, log.direction, existing_log=log)
 
 
@@ -68,6 +108,12 @@ def retry_log_entry(log_name):
 # ---------------------------------------------------------------------------
 
 def _process(contract, period_end, direction):
+    if frappe.db.exists(
+        "Invoice Generation Log",
+        {"contract": contract["name"], "period_end": period_end, "direction": direction, "status": "Success"},
+    ):
+        return
+
     existing_log_name = frappe.db.get_value(
         "Invoice Generation Log",
         {
@@ -100,7 +146,7 @@ def _attempt(contract, period_end, direction, existing_log=None):
     if not existing_log:
         log.insert(ignore_permissions=True)
 
-    log.last_attempt = now_datetime()
+    log.last_attempt = utc_now()
     log.retry_count = (log.retry_count or 0) + (1 if existing_log else 0)
 
     try:
@@ -112,7 +158,7 @@ def _attempt(contract, period_end, direction, existing_log=None):
             log.purchase_invoice = invoice_name
 
         log.status = "Success"
-        log.call_count = call_count
+        log.summary_count = call_count
         log.total_amount = total_amount
         log.error_message = None
     except Exception:
@@ -132,40 +178,37 @@ def _attempt(contract, period_end, direction, existing_log=None):
 # ---------------------------------------------------------------------------
 
 def _generate_sales_invoice(contract, period_start, period_end):
-    pending_calls = frappe.get_all(
-        "Call Record",
+    summaries = frappe.get_all(
+        "Daily Gain Summary",
         filters={
             "customer": contract["customer"],
-            "call_date": ("between", [period_start, period_end]),
+            "summary_date": ("between", [period_start, period_end]),
             "customer_invoice_status": "Pending",
-            "is_excluded": 0,
         },
-        fields=["name", "total_revenue", "duration_seconds"],
+        fields=["name", "total_revenue", "total_minutes"],
     )
 
-    if not pending_calls:
-        frappe.throw(f"No pending customer-side calls for {contract['customer']} ({period_start} → {period_end})")
-
-    total_amount = sum(c["total_revenue"] for c in pending_calls)
-    total_minutes = sum(c["duration_seconds"] for c in pending_calls) / 60.0
+    if not summaries:
+        frappe.throw(f"No pending gain summaries for {contract['customer']} ({period_start} → {period_end})")
 
     tcs = _get_company_settings(contract.get("company"))
     item_code = _get_or_create_telephony_item()
 
-    item = {
-        "item_code": item_code,
-        "description": (
-            f"Telephony services {period_start} to {period_end} "
-            f"({len(pending_calls)} calls, {round(total_minutes, 2)} min)"
-        ),
-        "qty": 1,
-        "rate": total_amount,
-        "amount": total_amount,
-    }
-    if tcs and tcs.income_account:
-        item["income_account"] = tcs.income_account
-    if tcs and tcs.cost_center:
-        item["cost_center"] = tcs.cost_center
+    items = _build_route_items(
+        party=contract["customer"],
+        rate_field="sell_rate",
+        party_filter="customer",
+        period_start=period_start,
+        period_end=period_end,
+        item_code=item_code,
+        account_field="income_account",
+        account_value=tcs.income_account if tcs else None,
+        cost_center=tcs.cost_center if tcs else None,
+        fallback_minutes=sum(r["total_minutes"] for r in summaries),
+        fallback_amount=sum(r["total_revenue"] for r in summaries),
+    )
+
+    total_amount = sum(i["amount"] for i in items)
 
     invoice_data = {
         "doctype": "Sales Invoice",
@@ -173,7 +216,7 @@ def _generate_sales_invoice(contract, period_start, period_end):
         "currency": contract["currency"],
         "posting_date": str(period_end),
         "due_date": str(add_days(period_end, 30)),
-        "items": [item],
+        "items": items,
     }
 
     if tcs:
@@ -192,14 +235,14 @@ def _generate_sales_invoice(contract, period_start, period_end):
     invoice.insert(ignore_permissions=True)
     invoice.submit()
 
-    _mark_calls_invoiced(
-        [c["name"] for c in pending_calls],
+    _mark_summaries_invoiced(
+        [r["name"] for r in summaries],
         status_field="customer_invoice_status",
         invoice_field="sales_invoice",
         invoice_name=invoice.name,
     )
 
-    return invoice.name, len(pending_calls), total_amount
+    return invoice.name, len(summaries), total_amount
 
 
 # ---------------------------------------------------------------------------
@@ -207,40 +250,37 @@ def _generate_sales_invoice(contract, period_start, period_end):
 # ---------------------------------------------------------------------------
 
 def _generate_purchase_invoice(contract, period_start, period_end):
-    pending_calls = frappe.get_all(
-        "Call Record",
+    summaries = frappe.get_all(
+        "Daily Gain Summary",
         filters={
             "supplier": contract["supplier"],
-            "call_date": ("between", [period_start, period_end]),
+            "summary_date": ("between", [period_start, period_end]),
             "supplier_invoice_status": "Pending",
-            "is_excluded": 0,
         },
-        fields=["name", "total_cost", "duration_seconds"],
+        fields=["name", "total_cost", "total_minutes"],
     )
 
-    if not pending_calls:
-        frappe.throw(f"No pending supplier-side calls for {contract['supplier']} ({period_start} → {period_end})")
-
-    total_amount = sum(c["total_cost"] for c in pending_calls)
-    total_minutes = sum(c["duration_seconds"] for c in pending_calls) / 60.0
+    if not summaries:
+        frappe.throw(f"No pending gain summaries for {contract['supplier']} ({period_start} → {period_end})")
 
     tcs = _get_company_settings(contract.get("company"))
     item_code = _get_or_create_telephony_item()
 
-    item = {
-        "item_code": item_code,
-        "description": (
-            f"Telephony services {period_start} to {period_end} "
-            f"({len(pending_calls)} calls, {round(total_minutes, 2)} min)"
-        ),
-        "qty": 1,
-        "rate": total_amount,
-        "amount": total_amount,
-    }
-    if tcs and tcs.expense_account:
-        item["expense_account"] = tcs.expense_account
-    if tcs and tcs.cost_center:
-        item["cost_center"] = tcs.cost_center
+    items = _build_route_items(
+        party=contract["supplier"],
+        rate_field="buy_rate",
+        party_filter="supplier",
+        period_start=period_start,
+        period_end=period_end,
+        item_code=item_code,
+        account_field="expense_account",
+        account_value=tcs.expense_account if tcs else None,
+        cost_center=tcs.cost_center if tcs else None,
+        fallback_minutes=sum(r["total_minutes"] for r in summaries),
+        fallback_amount=sum(r["total_cost"] for r in summaries),
+    )
+
+    total_amount = sum(i["amount"] for i in items)
 
     invoice_data = {
         "doctype": "Purchase Invoice",
@@ -248,7 +288,7 @@ def _generate_purchase_invoice(contract, period_start, period_end):
         "currency": contract["currency"],
         "posting_date": str(period_end),
         "due_date": str(add_days(period_end, 30)),
-        "items": [item],
+        "items": items,
     }
 
     if tcs:
@@ -261,42 +301,104 @@ def _generate_purchase_invoice(contract, period_start, period_end):
     invoice.insert(ignore_permissions=True)
     invoice.submit()
 
-    _mark_calls_invoiced(
-        [c["name"] for c in pending_calls],
+    _mark_summaries_invoiced(
+        [r["name"] for r in summaries],
         status_field="supplier_invoice_status",
         invoice_field="purchase_invoice",
         invoice_name=invoice.name,
     )
 
-    return invoice.name, len(pending_calls), total_amount
+    return invoice.name, len(summaries), total_amount
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _mark_calls_invoiced(call_names, status_field, invoice_field, invoice_name):
-    placeholders = ", ".join(["%s"] * len(call_names))
+def _build_route_items(party, rate_field, party_filter, period_start, period_end,
+                        item_code, account_field, account_value, cost_center,
+                        fallback_minutes, fallback_amount):
+    """
+    Returns a list of invoice item dicts — one per destination_country + rate.
+    qty = minutes, rate = per-minute price.
+    Falls back to a single summary item when no Call Records exist.
+    """
+    routes = frappe.db.sql(
+        f"""
+        SELECT
+            destination_country,
+            {rate_field}                            AS rate,
+            ROUND(SUM(duration_seconds) / 60.0, 6) AS minutes
+        FROM `tabCall Record`
+        WHERE {party_filter} = %s
+          AND DATE(call_date) BETWEEN %s AND %s
+          AND is_excluded = 0
+        GROUP BY destination_country, {rate_field}
+        ORDER BY minutes DESC
+        """,
+        [party, period_start, period_end],
+        as_dict=True,
+    )
+
+    def _make_item(description, qty, rate):
+        item = {
+            "item_code": item_code,
+            "description": description,
+            "qty": round(qty, 6),
+            "rate": round(rate, 6),
+            "amount": round(qty * rate, 6),
+        }
+        if account_value:
+            item[account_field] = account_value
+        if cost_center:
+            item["cost_center"] = cost_center
+        return item
+
+    if not routes:
+        return [_make_item(
+            f"Telephony services {period_start} to {period_end} ({round(fallback_minutes, 2)} min)",
+            qty=1,
+            rate=fallback_amount,
+        )]
+
+    return [
+        _make_item(
+            description=(
+                f"{r.destination_country or 'Unknown'} | "
+                f"{round(r.minutes, 2)} min | "
+                f"rate: {round(r.rate or 0, 6)} | "
+                f"amount: {round(r.minutes * (r.rate or 0), 4)}"
+            ),
+            qty=r.minutes,
+            rate=r.rate or 0,
+        )
+        for r in routes
+    ]
+
+
+def _mark_summaries_invoiced(summary_names, status_field, invoice_field, invoice_name):
+    placeholders = ", ".join(["%s"] * len(summary_names))
     frappe.db.sql(
-        f"""UPDATE `tabCall Record`
+        f"""UPDATE `tabDaily Gain Summary`
             SET {status_field} = 'Invoiced', {invoice_field} = %s, modified = NOW()
             WHERE name IN ({placeholders})""",
-        [invoice_name] + call_names,
+        [invoice_name] + summary_names,
     )
 
 
-def _period_ends_today(contract, as_of):
+def _is_period_end(contract, d):
+    """Returns True if `d` is the last day of a billing period for the contract."""
     cycle = contract["billing_cycle"]
     if cycle == "Monthly":
-        return as_of.day == calendar.monthrange(as_of.year, as_of.month)[1]
+        return d.day == calendar.monthrange(d.year, d.month)[1]
     if cycle == "Fortnightly":
-        last_day = calendar.monthrange(as_of.year, as_of.month)[1]
-        return as_of.day in (15, last_day)
+        last_day = calendar.monthrange(d.year, d.month)[1]
+        return d.day in (15, last_day)
     if cycle == "Weekly":
         start = getdate(contract["start_date"])
-        if as_of < start:
+        if d < start:
             return False
-        return ((as_of - start).days + 1) % 7 == 0
+        return ((d - start).days + 1) % 7 == 0
     return False
 
 

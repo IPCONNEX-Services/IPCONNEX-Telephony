@@ -14,9 +14,40 @@ from datetime import date
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGIN_PATH     = "/login/login"
+CURRENCY_ID    = "890355288"
 CUSTOMERS_PATH = "/customers"
 REPORT_PATH    = "/system_reports/traffic_flow_report"
 BALANCE_PATH   = "/system_reports/balance_report"
+
+
+# ---------------------------------------------------------------------------
+# URL builders
+# ---------------------------------------------------------------------------
+
+def get_login_url(settings) -> str:
+    """Returns the IXC login page URL from Telephony Settings."""
+    return (settings.url or "").rstrip("/") + LOGIN_PATH
+
+
+def get_data_url(settings, from_date: date, to_date: date) -> str:
+    """Returns the IXC traffic flow report URL for the given date range from Telephony Settings."""
+    return _build_report_url((settings.url or "").rstrip("/"), from_date, to_date)
+
+
+def _build_report_url(base_url: str, from_date: date, to_date: date) -> str:
+    return (
+        base_url + REPORT_PATH
+        + f"?utf8=%E2%9C%93"
+        f"&from%5Bday%5D={from_date.day}&from%5Bmonth%5D={from_date.month}&from%5Byear%5D={from_date.year}"
+        f"&from%5Bhour%5D=00&from%5Bminute%5D=0"
+        f"&to%5Bday%5D={to_date.day}&to%5Bmonth%5D={to_date.month}&to%5Byear%5D={to_date.year}"
+        f"&to%5Bhour%5D=23&to%5Bminute%5D=59"
+        f"&min_attempts=0&currency={CURRENCY_ID}"
+        f"&values%5Bpayee_id%5D%5B%5D=all"
+        f"&values%5Boriginator_id%5D%5B%5D=all"
+        f"&values%5Bterminator_id%5D%5B%5D=all"
+        f"&group_by=1&code=&tf_group_country=none&responsible=All&only_successfull=1&commit=Get+report"
+    )
 
 TABLE_REGEX  = r'<table[^>]*class="table"[^>]*>.*?</table>'
 _SKIP_CELLS  = {"", "Total", "Total:", "Local sum", "Profit", "Margin", "Markup"}
@@ -48,10 +79,12 @@ class IXCClient:
         import frappe
         from ipconnex_telephony.utils.acr_scraper import resolve_scraper_password
         settings  = frappe.get_single("Telephony Settings")
-        base_url  = (settings.ixc_url or "https://ipconnex.ixc.ua").rstrip("/")
-        username  = settings.scraper_username
-        password  = resolve_scraper_password(settings)
-        session    = _do_login(username, password, base_url)
+        base_url  = (settings.url or "").rstrip("/")
+        if not base_url:
+            return cls(None, {}, "")
+        username   = settings.scraper_username
+        password   = resolve_scraper_password(settings)
+        session    = _do_login(username, password, get_login_url(settings))
         references = _fetch_references(session, base_url)
         return cls(session, references, base_url)
 
@@ -59,10 +92,14 @@ class IXCClient:
         return self.references.get(ixc_name, ixc_name)
 
     def fetch_traffic(self, from_date: date, to_date: date) -> dict:
+        if not self.base_url:
+            return {"customers": [], "suppliers": []}
         html = fetch_traffic_report(self.session, from_date, to_date, self.base_url)
         return parse_traffic(html)
 
     def fetch_balance_html(self) -> str:
+        if not self.base_url:
+            return ""
         return fetch_balance_report(self.session, self.base_url)
 
 
@@ -70,18 +107,17 @@ class IXCClient:
 # Low-level session helpers (used by IXCClient; also exported for direct use)
 # ---------------------------------------------------------------------------
 
-def _do_login(username: str, password: str, base_url: str) -> requests.Session:
+def _do_login(username: str, password: str, login_url: str) -> requests.Session:
     """
     Opens an authenticated IXC session.
     requests.Session tracks cookies automatically — no manual jar handling needed.
     Raises RuntimeError if 'Logout' is absent from the response (bad credentials).
     Use IXCClient.connect() as the public entry point.
     """
-    url     = base_url + LOGIN_PATH
     session = requests.Session()
-    session.get(url, verify=False)          # establishes CSRF / session cookie
+    session.get(login_url, verify=False)    # establishes CSRF / session cookie
     r = session.post(
-        url,
+        login_url,
         data={"name": username, "password": password, "commit": "OK"},
         verify=False,
     )
@@ -118,19 +154,7 @@ def _fetch_references(session: requests.Session, base_url: str) -> dict:
 
 def fetch_traffic_report(session: requests.Session, from_date: date, to_date: date, base_url: str) -> str:
     """Fetches the raw HTML of the IXC traffic flow report for the given date range."""
-    params = (
-        f"?utf8=%E2%9C%93"
-        f"&from%5Bday%5D={from_date.day}&from%5Bmonth%5D={from_date.month}&from%5Byear%5D={from_date.year}"
-        f"&from%5Bhour%5D=00&from%5Bminute%5D=0"
-        f"&to%5Bday%5D={to_date.day}&to%5Bmonth%5D={to_date.month}&to%5Byear%5D={to_date.year}"
-        f"&to%5Bhour%5D=23&to%5Bminute%5D=59"
-        f"&min_attempts=0&currency=890355288"
-        f"&values%5Bpayee_id%5D%5B%5D=all"
-        f"&values%5Boriginator_id%5D%5B%5D=all"
-        f"&values%5Bterminator_id%5D%5B%5D=all"
-        f"&group_by=1&code=&tf_group_country=none&responsible=All&commit=Get+report"
-    )
-    r = session.get(base_url + REPORT_PATH + params, verify=False)
+    r = session.get(_build_report_url(base_url, from_date, to_date), verify=False)
     r.raise_for_status()
     return r.text
 

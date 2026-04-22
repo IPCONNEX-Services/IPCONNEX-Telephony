@@ -2,7 +2,7 @@
 Infisical client — pulls secrets from the IPCONNEX self-hosted Infisical instance.
 
 Env vars expected on the bench:
-  INFISICAL_URL            (e.g. http://10.100.10.230)
+  INFISICAL_URL            (e.g. https://infisical.example.com)
   INFISICAL_CLIENT_ID
   INFISICAL_CLIENT_SECRET
 

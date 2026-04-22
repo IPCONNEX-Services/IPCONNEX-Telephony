@@ -12,7 +12,7 @@ Usage:
 """
 
 import json
-from datetime import date
+from datetime import date, datetime, timezone
 
 from .common import IXCClient
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     import sys
     from datetime import timedelta
 
-    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else date.today() - timedelta(days=1)
+    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else datetime.now(timezone.utc).date() - timedelta(days=1)
 
     client = IXCClient.connect()
     result = get_invoice_data(client, target, target)

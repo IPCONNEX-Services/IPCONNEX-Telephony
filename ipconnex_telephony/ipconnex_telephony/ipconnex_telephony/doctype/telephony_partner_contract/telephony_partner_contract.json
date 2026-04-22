@@ -15,6 +15,13 @@
   "customer",
   "column_break_2",
   "supplier",
+  "contract_section",
+  "billing_cycle",
+  "start_date",
+  "currency",
+  "column_break_contract",
+  "company",
+  "sales_manager",
   "balance_section",
   "total_receivable",
   "total_payable",
@@ -63,7 +70,8 @@
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "label": "Active"
+   "label": "Active",
+   "in_list_view": 1
   },
   {
    "fieldname": "tax_id",
@@ -81,6 +89,7 @@
    "fieldtype": "Link",
    "label": "Customer",
    "options": "Customer",
+   "description": "Customer leg \u2014 Sales Invoice. Optional for supplier-only partners.",
    "in_list_view": 1
   },
   {
@@ -92,7 +101,50 @@
    "fieldtype": "Link",
    "label": "Supplier",
    "options": "Supplier",
+   "description": "Supplier leg \u2014 Purchase Invoice. Set both for interconnect/netting.",
    "in_list_view": 1
+  },
+  {
+   "fieldname": "contract_section",
+   "fieldtype": "Section Break",
+   "label": "Contract Terms"
+  },
+  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "label": "Billing Cycle",
+   "options": "Weekly\nFortnightly\nMonthly",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_contract",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Telephony Company Settings"
+  },
+  {
+   "fieldname": "sales_manager",
+   "fieldtype": "Link",
+   "label": "Sales Manager",
+   "options": "Telephony Sales Manager"
   },
   {
    "fieldname": "balance_section",
@@ -244,8 +296,8 @@
  ],
  "modified": "2026-04-20 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Ipconnex Telephony",
- "name": "Telephony Partner",
+ "module": "IPCONNEX Telephony",
+ "name": "Telephony Partner Contract",
  "owner": "Administrator",
  "permissions": [
   {

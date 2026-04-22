@@ -12,7 +12,7 @@
     "timespan": "Last Month",
     "time_interval": "Daily",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -28,7 +28,7 @@
     "timespan": "Last Month",
     "time_interval": "Daily",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -43,7 +43,7 @@
     "type": "Bar",
     "timespan": "Last Week",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -58,7 +58,7 @@
     "type": "Bar",
     "timespan": "Last Month",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -73,7 +73,7 @@
     "type": "Pie",
     "timespan": "Last Month",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -89,7 +89,7 @@
     "timespan": "Last Month",
     "time_interval": "Daily",
     "filters_json": "[]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -104,7 +104,70 @@
     "number_of_groups": 10,
     "type": "Bar",
     "filters_json": "[[\"Sales Invoice\", \"docstatus\", \"=\", 1], [\"Sales Invoice\", \"outstanding_amount\", \">\", 0]]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Dashboard Chart",
+    "name": "IPX - Cost by Supplier",
+    "chart_name": "Cost by Supplier",
+    "chart_type": "Group By",
+    "document_type": "Daily Gain Summary",
+    "group_by_based_on": "supplier",
+    "group_by_type": "Sum",
+    "aggregate_function_based_on": "total_cost",
+    "number_of_groups": 15,
+    "type": "Bar",
+    "timespan": "Last Month",
+    "filters_json": "[[\"Daily Gain Summary\", \"supplier\", \"!=\", \"\"]]",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Dashboard Chart",
+    "name": "IPX - Cost Trend",
+    "chart_name": "Daily Cost Trend",
+    "chart_type": "Sum",
+    "document_type": "Daily Gain Summary",
+    "based_on": "summary_date",
+    "timeseries": 1,
+    "aggregate_function_based_on": "total_cost",
+    "type": "Line",
+    "timespan": "Last Month",
+    "time_interval": "Daily",
+    "filters_json": "[[\"Daily Gain Summary\", \"supplier\", \"!=\", \"\"]]",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Dashboard Chart",
+    "name": "IPX - Purchase Invoice Trend",
+    "chart_name": "Purchase Invoice Trend",
+    "chart_type": "Sum",
+    "document_type": "Purchase Invoice",
+    "based_on": "posting_date",
+    "timeseries": 1,
+    "aggregate_function_based_on": "grand_total",
+    "type": "Line",
+    "timespan": "Last Quarter",
+    "time_interval": "Monthly",
+    "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1]]",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Dashboard Chart",
+    "name": "IPX - Top Suppliers by Cost",
+    "chart_name": "Top Suppliers by Cost",
+    "chart_type": "Group By",
+    "document_type": "Purchase Invoice",
+    "group_by_based_on": "supplier",
+    "group_by_type": "Sum",
+    "aggregate_function_based_on": "grand_total",
+    "number_of_groups": 10,
+    "type": "Bar",
+    "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1]]",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -119,7 +182,7 @@
     "number_of_groups": 10,
     "type": "Bar",
     "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1], [\"Purchase Invoice\", \"outstanding_amount\", \">\", 0]]",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   }
 ]

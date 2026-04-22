@@ -1,9 +1,28 @@
 [
   {
     "doctype": "Dashboard",
+    "name": "Telephony Supplier Invoices",
+    "dashboard_name": "Telephony Supplier Invoices",
+    "module": "IPCONNEX Telephony",
+    "is_default": 0,
+    "cards": [
+      {"card": "IPX - Total Payable"},
+      {"card": "IPX - Overdue Payables"},
+      {"card": "IPX - Pending Supplier Summaries"},
+      {"card": "IPX - Active Suppliers"}
+    ],
+    "charts": [
+      {"chart": "IPX - Cost by Supplier",         "width": "Full"},
+      {"chart": "IPX - Cost Trend",               "width": "Full"},
+      {"chart": "IPX - Purchase Invoice Trend",   "width": "Half"},
+      {"chart": "IPX - Top Suppliers by Cost",    "width": "Half"}
+    ]
+  },
+  {
+    "doctype": "Dashboard",
     "name": "Telephony Overview",
     "dashboard_name": "Telephony Overview",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_default": 0,
     "cards": [
       {"card": "IPX - Active Contracts"},

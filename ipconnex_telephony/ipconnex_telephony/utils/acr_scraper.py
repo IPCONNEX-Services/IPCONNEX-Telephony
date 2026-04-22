@@ -1,49 +1,47 @@
 """
-ACR call record scraper — incremental web UI scraping.
+ACR/IXC terminator scraper — fetches supplier traffic via the traffic flow report.
 
-Login flow:  POST {acr_url}/index.php  (or /login — adjust ACR_LOGIN_PATH)
-CDR page:    GET  {acr_url}/cdr.php    (or /cdr  — adjust ACR_CDR_PATH)
+Login:    GET  {url}/login/login  (establishes session cookie)
+          POST {url}/login/login  with name/password/commit=OK
+Report:   GET  {url}/system_reports/traffic_flow_report  with date-range + terminator params
 
-Column mapping: ACR_COLUMN_MAP maps ACR table header text → our field name.
-Adjust the keys to match the exact column headers shown in the ACR CDR table.
+Parses the class="table" traffic table, keeps only Terminated rows with duration > 0.
 """
 
 import frappe
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, get_datetime
 
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, date as date_type
+from datetime import datetime, date as date_type, timedelta
 
 from ipconnex_telephony.utils.infisical import get_secret as infisical_get_secret
 
 
 # ---------------------------------------------------------------------------
-# Adjust these to match your ACR installation
+# Paths
 # ---------------------------------------------------------------------------
 
-ACR_LOGIN_PATH = "/index.php"
-ACR_CDR_PATH = "/cdr.php"
+ACR_LOGIN_PATH  = "/login/login"
+ACR_REPORT_PATH = "/system_reports/traffic_flow_report"
+
+# Platform currency ID — move to Telephony Settings.ixc_currency_id when configurable
+ACR_CURRENCY_ID = "890355288"
 
 # Map ACR column header text → Call Record field name.
-# Keys must exactly match what appears in the <th> cells of the CDR table.
+# Adjust keys to match actual <th> text shown in the tablesorter table.
 ACR_COLUMN_MAP = {
     "Call ID":          "acr_call_id",
     "Date":             "call_date",
     "Start Time":       "start_time",
     "Duration":         "duration_seconds",
     "Customer":         "customer",
+    "Terminator":       "supplier",
     "Supplier":         "supplier",
     "Destination":      "destination_number",
     "Country":          "destination_country",
     "Buy Rate":         "buy_rate",
     "Sell Rate":        "sell_rate",
-}
-
-# Login form field names (inspect the ACR login page to confirm)
-ACR_LOGIN_FIELDS = {
-    "username_field": "username",
-    "password_field": "password",
 }
 
 
@@ -56,20 +54,73 @@ def sync_call_records():
     if not settings.is_active:
         return
 
-    last_id = _get_last_synced_id()
-    session = _login(settings)
-    raw_rows = _fetch_cdr_page(session, settings, since_id=last_id)
-    records = _parse_rows(raw_rows)
+    interval = (settings.sync_interval_minutes or 60)
+    if settings.last_acr_sync:
+        elapsed = (now_datetime() - get_datetime(settings.last_acr_sync)).total_seconds() / 60
+        if elapsed < interval:
+            return
+
+    target_date = date_type.today() - timedelta(days=1)
+    session  = _login(settings)
+    raw_rows = _fetch_cdr_page(session, settings, target_date, target_date)
+    records  = _parse_rows(raw_rows)
 
     inserted = 0
     for rec in records:
-        if frappe.db.exists("Call Record", rec["acr_call_id"]):
+        if not rec.get("acr_call_id"):
+            continue
+        if frappe.db.exists("Call Record", {"acr_call_id": rec["acr_call_id"]}):
             continue
         frappe.get_doc({"doctype": "Call Record", **rec}).insert(ignore_permissions=True)
         inserted += 1
 
+    frappe.db.set_value("Telephony Settings", "Telephony Settings", "last_acr_sync", now_datetime())
     frappe.db.commit()
-    frappe.logger().info(f"ACR sync: {inserted} new records (since id={last_id})")
+    frappe.logger().info(f"ACR sync {target_date}: {inserted} new records")
+
+
+# ---------------------------------------------------------------------------
+# URL builders
+# ---------------------------------------------------------------------------
+
+def get_login_url(settings) -> str:
+    return (settings.url or "").rstrip("/") + ACR_LOGIN_PATH
+
+
+def get_data_url(settings, from_date: date_type, to_date: date_type) -> str:
+    fd, fm, fy = from_date.day, from_date.month, from_date.year
+    td, tm, ty = to_date.day,   to_date.month,   to_date.year
+    base = (settings.url or "").rstrip("/")
+    return (
+        base + ACR_REPORT_PATH
+        + f"?utf8=%E2%9C%93"
+        f"&from%5Bday%5D={fd}&from%5Bmonth%5D={fm}&from%5Byear%5D={fy}"
+        f"&from%5Bhour%5D=0&from%5Bminute%5D=0"
+        f"&to%5Bday%5D={td}&to%5Bmonth%5D={tm}&to%5Byear%5D={ty}"
+        f"&to%5Bhour%5D=23&to%5Bminute%5D=59"
+        f"&post%5Bfrom_accounting_time%281i%29%5D={fy}"
+        f"&post%5Bfrom_accounting_time%282i%29%5D={fm}"
+        f"&post%5Bfrom_accounting_time%283i%29%5D={fd}"
+        f"&post%5Bfrom_accounting_time%284i%29%5D=00"
+        f"&post%5Bfrom_accounting_time%285i%29%5D=0"
+        f"&post%5Bto_accounting_time%281i%29%5D={ty}"
+        f"&post%5Bto_accounting_time%282i%29%5D={tm}"
+        f"&post%5Bto_accounting_time%283i%29%5D={td}"
+        f"&post%5Bto_accounting_time%284i%29%5D=23"
+        f"&post%5Bto_accounting_time%285i%29%5D=59"
+        f"&min_attempts=0&currency={ACR_CURRENCY_ID}"
+        f"&values%5Bpayee_id%5D%5B%5D=all"
+        f"&values%5Boriginator_id%5D%5B%5D=all"
+        f"&values%5Boriginator_tf_id%5D%5B%5D=all"
+        f"&values%5Bterminator_id%5D%5B%5D=all"
+        f"&values%5Bterminator_tf_id%5D%5B%5D=only_terminators"
+        f"&group_by=1&code=&tf_group_country=none&group_country=none"
+        f"&responsible=All&sort=out_price&show_connect_price=1"
+        f"&native_time_zone=UTC"
+        f"&from_period={fy}-{fm:02d}-{fd:02d}+00%3A00%3A00+UTC"
+        f"&to_period={ty}-{tm:02d}-{td:02d}+23%3A59%3A00+UTC"
+        f"&commit=Get+report"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -77,15 +128,21 @@ def sync_call_records():
 # ---------------------------------------------------------------------------
 
 def _login(settings):
-    session = requests.Session()
-    session.post(
-        settings.acr_url.rstrip("/") + ACR_LOGIN_PATH,
+    login_url = get_login_url(settings)
+    session   = requests.Session()
+    session.get(login_url, verify=False, timeout=30)
+    r = session.post(
+        login_url,
         data={
-            ACR_LOGIN_FIELDS["username_field"]: settings.scraper_username,
-            ACR_LOGIN_FIELDS["password_field"]: resolve_scraper_password(settings),
+            "name":     settings.scraper_username,
+            "password": resolve_scraper_password(settings),
+            "commit":   "OK",
         },
+        verify=False,
         timeout=30,
     )
+    if "Logout" not in r.text:
+        frappe.throw("ACR login failed — check credentials in Telephony Settings")
     return session
 
 
@@ -103,31 +160,98 @@ def resolve_scraper_password(settings):
     return settings.get_password("scraper_password") if settings.get("scraper_password") else None
 
 
-def _fetch_cdr_page(session, settings, since_id=None):
-    params = {}
-    if since_id:
-        params["since_id"] = since_id
-
+def _fetch_cdr_page(session, settings, from_date: date_type, to_date: date_type):
+    import re
     resp = session.get(
-        settings.acr_url.rstrip("/") + ACR_CDR_PATH,
-        params=params,
+        get_data_url(settings, from_date, to_date),
+        verify=False,
         timeout=60,
     )
     resp.raise_for_status()
 
-    soup = BeautifulSoup(resp.text, "lxml")
-    table = soup.find("table")
-    if not table:
-        frappe.logger().warning("ACR scraper: no <table> found on CDR page.")
+    matches = re.findall(
+        r'<table[^>]*class="table"[^>]*>.*?</table>',
+        resp.text, re.IGNORECASE | re.DOTALL,
+    )
+    if not matches:
+        frappe.logger().warning("ACR scraper: no traffic table found on terminator report page.")
         return []
 
-    headers = [th.get_text(strip=True) for th in table.find("tr").find_all(["th", "td"])]
-    rows = []
-    for tr in table.find_all("tr")[1:]:  # skip header row
-        cells = [td.get_text(strip=True) for td in tr.find_all("td")]
-        if cells:
-            rows.append(dict(zip(headers, cells)))
+    tbl = re.sub(r'(<[^>]+)\s+onmouseover="[^"]*"', r'\1', matches[0])
+    tbl = re.sub(r'<div[^>]*style="display:\s*none;"[^>]*>.*?</div>', '', tbl,
+                 flags=re.IGNORECASE | re.DOTALL)
+    soup = BeautifulSoup(tbl, "html5lib")
 
+    FLUSH = {"", "Total", "Total:", "Local sum", "Local sum:", "Profit", "Margin", "Markup"}
+    SKIP  = {"Payee"}
+
+    def _cell(td):
+        return next((t.strip() for t in td.strings if t.strip()), "")
+
+    rows = []
+    company_name = ""
+    company_rows = []
+
+    def _flush():
+        if company_name and company_rows:
+            nz = [r for r in company_rows
+                  if _float(r["duration"]) != 0]
+            if nz:
+                rows.extend(nz)
+
+    for tr in soup.find_all("tr"):
+        line = [_cell(td) for td in tr.find_all("td")]
+        if not line:
+            continue
+        first = line[0]
+        if first in SKIP:
+            continue
+        if first in FLUSH:
+            _flush()
+            company_name = ""
+            company_rows = []
+            continue
+        if first == "Terminated":
+            try:
+                company_rows.append({
+                    "supplier":  company_name,
+                    "country":   line[1],
+                    "attempts":  line[3],
+                    "duration":  line[4],
+                    "asr":       line[5],
+                    "acd":       line[6],
+                    "charges":   line[7],
+                })
+            except IndexError:
+                pass
+            continue
+        if first == "Originated":
+            _flush()
+            company_name = ""
+            company_rows = []
+            continue
+        index = 0
+        if not company_name:
+            company_name = line[0]
+            ctype = line[1] if len(line) > 1 else ""
+            if ctype == "Originated":
+                company_name = ""
+                continue
+            index = 2
+        try:
+            company_rows.append({
+                "supplier":  company_name,
+                "country":   line[0 + index],
+                "attempts":  line[2 + index],
+                "duration":  line[3 + index],
+                "asr":       line[4 + index],
+                "acd":       line[5 + index],
+                "charges":   line[6 + index],
+            })
+        except IndexError:
+            pass
+
+    _flush()
     return rows
 
 
@@ -216,15 +340,11 @@ def _parse_duration(value):
 
 
 def _parse_float(value):
-    return float(str(value).replace(",", ".").strip() or 0)
+    s = str(value).strip()
+    s = s.replace(',', '') if '.' in s else s.replace(',', '.')
+    try:
+        return float(s or 0)
+    except ValueError:
+        return 0.0
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _get_last_synced_id():
-    result = frappe.db.sql(
-        "SELECT acr_call_id FROM `tabCall Record` ORDER BY call_date DESC, start_time DESC LIMIT 1"
-    )
-    return result[0][0] if result else None

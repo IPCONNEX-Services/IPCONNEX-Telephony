@@ -11,7 +11,7 @@ Usage:
 
 import json
 import re
-from datetime import date
+from datetime import date, datetime, timezone
 
 from bs4 import BeautifulSoup
 
@@ -39,7 +39,7 @@ def get_balance_report(client: IXCClient) -> dict:
     accounts = _parse_balance(html, client)
 
     return {
-        "fetched_at": date.today().isoformat(),
+        "fetched_at": datetime.now(timezone.utc).date().isoformat(),
         "accounts":   accounts,
     }
 

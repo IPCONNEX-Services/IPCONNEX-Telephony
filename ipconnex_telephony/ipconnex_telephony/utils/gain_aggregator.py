@@ -86,7 +86,7 @@ def _aggregate_date(target_date):
 
 def _get_contract_info(customer):
     result = frappe.db.get_value(
-        "Telephony Contract",
+        "Telephony Partner Contract",
         {"customer": customer, "is_active": 1},
         ["sales_manager", "company"],
         as_dict=True,

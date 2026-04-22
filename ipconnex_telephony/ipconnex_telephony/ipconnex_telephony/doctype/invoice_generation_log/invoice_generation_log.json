@@ -19,7 +19,7 @@
   "result_section",
   "sales_invoice",
   "purchase_invoice",
-  "call_count",
+  "summary_count",
   "total_amount",
   "error_section",
   "error_message"
@@ -51,7 +51,7 @@
    "fieldname": "contract",
    "fieldtype": "Link",
    "label": "Contract",
-   "options": "Telephony Contract"
+   "options": "Telephony Partner Contract"
   },
   {
    "fieldname": "period_start",
@@ -111,9 +111,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "call_count",
+   "fieldname": "summary_count",
    "fieldtype": "Int",
-   "label": "Calls",
+   "label": "Days",
    "read_only": 1
   },
   {
@@ -137,7 +137,7 @@
  ],
  "modified": "2026-04-20 00:00:00.000000",
  "modified_by": "Administrator",
- "module": "Ipconnex Telephony",
+ "module": "IPCONNEX Telephony",
  "name": "Invoice Generation Log",
  "owner": "Administrator",
  "permissions": [

@@ -1,13 +1,13 @@
 [
   {
     "doctype": "Number Card",
-    "name": "IPX - Active Contracts",
-    "label": "Active Contracts",
-    "document_type": "Telephony Contract",
+    "name": "IPX - Active Partner Contracts",
+    "label": "Active Partner Contracts",
+    "document_type": "Telephony Partner Contract",
     "function": "Count",
-    "filters_json": "[[\"Telephony Contract\", \"is_active\", \"=\", 1]]",
+    "filters_json": "[[\"Telephony Partner Contract\", \"is_active\", \"=\", 1]]",
     "color": "#5e64ff",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -18,7 +18,7 @@
     "function": "Count",
     "filters_json": "[[\"Telephony Ticket\", \"status\", \"=\", \"Open\"]]",
     "color": "#f8814f",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -29,7 +29,7 @@
     "function": "Count",
     "filters_json": "[[\"Rate Task\", \"status\", \"=\", \"Pending\"]]",
     "color": "#7b5ea7",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -40,7 +40,7 @@
     "function": "Count",
     "filters_json": "[[\"Call Quality Summary\", \"asr_status\", \"=\", \"Critical\"]]",
     "color": "#e24c4b",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -51,7 +51,7 @@
     "function": "Count",
     "filters_json": "[[\"Invoice Generation Log\", \"status\", \"=\", \"Failed\"]]",
     "color": "#e24c4b",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -63,7 +63,7 @@
     "aggregate_function_based_on": "outstanding_amount",
     "filters_json": "[[\"Sales Invoice\", \"docstatus\", \"=\", 1], [\"Sales Invoice\", \"outstanding_amount\", \">\", 0]]",
     "color": "#2ecc71",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
@@ -75,18 +75,52 @@
     "aggregate_function_based_on": "outstanding_amount",
     "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1], [\"Purchase Invoice\", \"outstanding_amount\", \">\", 0]]",
     "color": "#e67e22",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Overdue Payables",
+    "label": "Overdue Payables",
+    "document_type": "Purchase Invoice",
+    "function": "Sum",
+    "aggregate_function_based_on": "outstanding_amount",
+    "filters_json": "[[\"Purchase Invoice\", \"docstatus\", \"=\", 1], [\"Purchase Invoice\", \"outstanding_amount\", \">\", 0], [\"Purchase Invoice\", \"due_date\", \"<\", \"Today\"]]",
+    "color": "#e24c4b",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Pending Supplier Summaries",
+    "label": "Pending Supplier Summaries",
+    "document_type": "Daily Gain Summary",
+    "function": "Count",
+    "filters_json": "[[\"Daily Gain Summary\", \"supplier_invoice_status\", \"=\", \"Pending\"], [\"Daily Gain Summary\", \"supplier\", \"!=\", \"\"]]",
+    "color": "#f8814f",
+    "module": "IPCONNEX Telephony",
+    "is_public": 1
+  },
+  {
+    "doctype": "Number Card",
+    "name": "IPX - Active Suppliers",
+    "label": "Active Suppliers",
+    "document_type": "Telephony Partner Contract",
+    "function": "Count",
+    "filters_json": "[[\"Telephony Partner Contract\", \"is_active\", \"=\", 1], [\"Telephony Partner Contract\", \"supplier\", \"!=\", \"\"]]",
+    "color": "#5e64ff",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   },
   {
     "doctype": "Number Card",
     "name": "IPX - Active Partners",
     "label": "Active Partners",
-    "document_type": "Telephony Partner",
+    "document_type": "Telephony Partner Contract",
     "function": "Count",
     "filters_json": "[[\"Telephony Partner\", \"is_active\", \"=\", 1]]",
     "color": "#5e64ff",
-    "module": "Ipconnex Telephony",
+    "module": "IPCONNEX Telephony",
     "is_public": 1
   }
 ]

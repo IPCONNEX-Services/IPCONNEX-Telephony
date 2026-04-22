@@ -13,13 +13,18 @@ Usage:
 """
 
 import json
-from datetime import date
+from datetime import date, datetime, timezone
 
 from .common import IXCClient
 
-ASR_CRITICAL = 30.0   # % — below this: critical
-ASR_WARNING  = 60.0   # % — below this: warning
-ACD_LOW      = 30.0   # seconds — below this: low
+
+def _get_thresholds():
+    try:
+        import frappe
+        s = frappe.get_single("Telephony Settings")
+        return (s.asr_critical or 30.0), (s.asr_warning or 50.0), (s.acd_low or 30.0)
+    except Exception:
+        return 30.0, 50.0, 30.0
 
 
 def get_asr_quality(client: IXCClient, from_date: date, to_date: date) -> dict:
@@ -58,12 +63,13 @@ def get_asr_quality(client: IXCClient, from_date: date, to_date: date) -> dict:
         ]
       }
     """
+    asr_critical, asr_warning, acd_low = _get_thresholds()
     parsed    = client.fetch_traffic(from_date, to_date)
     suppliers = []
 
     for company in parsed["suppliers"]:
         ixc_name     = company["name"]
-        enriched     = [_enrich_row(r) for r in company["rows"]]
+        enriched     = [_enrich_row(r, asr_critical, asr_warning, acd_low) for r in company["rows"]]
 
         total_att    = sum(r["attempts"]   for r in enriched)
         total_ans    = sum(r["answered"]   for r in enriched)
@@ -91,7 +97,7 @@ def get_asr_quality(client: IXCClient, from_date: date, to_date: date) -> dict:
     }
 
 
-def _enrich_row(r: dict) -> dict:
+def _enrich_row(r: dict, asr_critical: float, asr_warning: float, acd_low: float) -> dict:
     answered   = round(r["attempts"] * r["asr"] / 100) if r["asr"] else 0
     duration_s = int(r["duration"] * 60)
     return {
@@ -100,26 +106,18 @@ def _enrich_row(r: dict) -> dict:
         "answered":   answered,
         "duration_s": duration_s,
         "asr":        r["asr"],
-        "asr_status": _asr_status(r["asr"]),
-        "acd":        r["acd"],          # IXC-provided — no recomputation
-        "acd_status": "low" if r["acd"] < ACD_LOW else "ok",
+        "asr_status": "critical" if r["asr"] < asr_critical else ("warning" if r["asr"] < asr_warning else "ok"),
+        "acd":        r["acd"],
+        "acd_status": "low" if r["acd"] < acd_low else "ok",
         "charges":    r["charges"],
     }
-
-
-def _asr_status(asr: float) -> str:
-    if asr < ASR_CRITICAL:
-        return "critical"
-    if asr < ASR_WARNING:
-        return "warning"
-    return "ok"
 
 
 if __name__ == "__main__":
     import sys
     from datetime import timedelta
 
-    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else date.today() - timedelta(days=1)
+    target = date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else datetime.now(timezone.utc).date() - timedelta(days=1)
 
     client = IXCClient.connect()
     result = get_asr_quality(client, target, target)
